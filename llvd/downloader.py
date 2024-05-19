@@ -59,17 +59,35 @@ def download_subtitles(index, subs, video_name, path, video_duration):
 def download_exercises(links, path):
     """Download exercises."""
     for link in links:
-        filename = re.split("exercises/(.+).zip", link)[1]
+       filename = re.split("exercises/(.+).zip", link)[1]
         filepath = f"{path}/{clean_name(filename)}.zip"
         with open(filepath, "wb") as f:
-            # Set up the request
-            request = requests.get(
-                link,
-                stream=True,
-                headers={"Accept-Encoding": None, "Content-Encoding": "gzip"},
-            )
-            download_size = request.headers.get("content-length")
+            download_size = 0
+            maximum_retries = 200
 
+            while maximum_retries > 0:
+                
+                waiting_time = random.randint(30, 250)
+                time.sleep(waiting_time)
+                print("sleep " + str(waiting_time) + "\n")
+
+                requests.adapters.HTTPAdapter(max_retries=maximum_retries)
+                # Set up the request
+                response = requests.get(
+                    link,
+                    stream=True,
+                    headers={"Accept-Encoding": None, "Content-Encoding": "gzip"},
+                )
+                download_size = response.headers.get("content-length")
+            if download_size is None and maximum_retries > 0:
+                print("retry\n")
+                maximum_retries -= 1
+                print(maximum_retries)
+            else:
+                print("success\n")
+                break
+
+            
             # Show a progress bar while downloading the file
             if download_size:
                 pbar = tqdm(
